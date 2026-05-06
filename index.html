@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tiger Hood — Livraison Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --blue:#1B4FD8;--blue2:#1339A8;--blue3:#EEF3FF;--blue4:#C7D7FC;
+  --green:#15803D;--green2:#DCFCE7;--green3:#16A34A;
+  --red:#DC2626;--red2:#FEE2E2;
+  --orange:#D97706;--orange2:#FEF3C7;
+  --gray:#64748B;--gray2:#F1F5F9;--gray3:#E2E8F0;--gray4:#CBD5E1;
+  --dark:#0F172A;--white:#fff;
+  --r:14px;--r2:10px;--r3:20px;
+  --sh:0 1px 4px rgba(0,0,0,.08);
+  --sh2:0 4px 20px rgba(0,0,0,.1);
+  --sh3:0 20px 60px rgba(0,0,0,.18);
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#F8FAFC;color:var(--dark);display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;}
+.scr{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+.scr.on{display:flex;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.1rem .8rem;background:#fff;border-bottom:1px solid var(--gray3);flex-shrink:0;}
+.topbar-brand{font-size:1.1rem;font-weight:900;color:var(--blue2);display:flex;align-items:center;gap:.35rem;}
+.topbar-right{display:flex;align-items:center;gap:.6rem;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px;}
+.scroll::-webkit-scrollbar{display:none;}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--gray3);display:none;z-index:100;padding:0 .5rem;}
+.bnav.on{display:flex;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.6rem .2rem .5rem;cursor:pointer;position:relative;border:none;background:transparent;font-family:'Plus Jakarta Sans',sans-serif;color:var(--gray);transition:color .2s;}
+.bnav-item.on{color:var(--blue);}
+.bnav-item .bi{font-size:1.3rem;margin-bottom:.15rem;}
+.bnav-item .bl{font-size:.65rem;font-weight:700;}
+.bnav-badge{position:absolute;top:.4rem;right:calc(50% - 18px);min-width:16px;height:16px;background:var(--red);color:#fff;border-radius:50px;font-size:.58rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;display:none;}
+.bnav-badge.on{display:flex;}
+.card{background:#fff;border-radius:var(--r);border:1px solid var(--gray3);box-shadow:var(--sh);margin:0 1rem 1rem;}
+.card-head{padding:.9rem 1rem;border-bottom:1px solid var(--gray3);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:.88rem;font-weight:800;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;padding:1rem 1rem 0;}
+.scard{background:#fff;border-radius:var(--r);border:1px solid var(--gray3);padding:1rem 1.1rem;box-shadow:var(--sh);}
+.scard-label{font-size:.68rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem;}
+.scard-val{font-size:1.9rem;font-weight:900;color:var(--dark);}
+.badge{display:inline-flex;align-items:center;gap:.2rem;padding:.18rem .6rem;border-radius:50px;font-size:.7rem;font-weight:700;}
+.bwait{background:var(--orange2);color:var(--orange);}
+.bprog{background:var(--blue3);color:var(--blue2);}
+.bdone{background:var(--green2);color:var(--green);}
+.bblue{background:var(--blue3);color:var(--blue);}
+.bred{background:var(--red2);color:var(--red);}
+.tbl{width:100%;border-collapse:collapse;font-size:.82rem;}
+.tbl th{text-align:left;font-size:.65rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;padding:.5rem .8rem;background:var(--gray2);border-bottom:1px solid var(--gray3);}
+.tbl td{padding:.65rem .8rem;border-bottom:1px solid #F8FAFC;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl-wrap{overflow-x:auto;}
+.mcard{background:#fff;border-radius:var(--r);border:1px solid var(--gray3);box-shadow:var(--sh);margin:0 1rem 1rem;overflow:hidden;}
+.mcard-top{padding:1rem 1rem .7rem;display:flex;align-items:flex-start;gap:.9rem;}
+.mcard-icon{width:46px;height:46px;background:var(--blue3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.mcard-info{flex:1;}
+.mcard-ref{font-size:.65rem;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;}
+.mcard-client{font-size:.95rem;font-weight:800;margin:.15rem 0;}
+.mcard-route{font-size:.78rem;color:var(--gray);display:flex;align-items:center;gap:.3rem;margin:.3rem 0;}
+.mcard-desc{font-size:.76rem;color:var(--gray);margin-top:.2rem;}
+.mcard-bot{padding:.7rem 1rem;border-top:1px solid var(--gray3);display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.65rem 1.3rem;border-radius:50px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.84rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover,.btn-blue:active{background:var(--blue2);}
+.btn-green{background:var(--green3);color:#fff;}
+.btn-green:active{opacity:.85;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-red:active{opacity:.85;}
+.btn-ghost{background:var(--gray2);color:var(--gray);font-weight:600;}
+.btn-ghost:active{background:var(--gray3);}
+.btn-full{width:100%;border-radius:var(--r2);}
+.btn-sm{padding:.4rem 1rem;font-size:.76rem;}
+.fg{margin-bottom:.9rem;}
+.fg label{display:block;font-size:.75rem;font-weight:700;color:var(--gray);margin-bottom:.35rem;}
+.fg input,.fg textarea,.fg select{width:100%;padding:.72rem .95rem;border:1.5px solid var(--gray3);border-radius:var(--r2);font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;outline:none;color:var(--dark);background:#fff;transition:border-color .2s;}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--blue);}
+.fg textarea{resize:vertical;min-height:80px;}
+.fg select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;}
+.err-box{background:var(--red2);color:var(--red);border-radius:var(--r2);padding:.55rem .9rem;font-size:.8rem;font-weight:600;display:none;margin-bottom:.9rem;}
+.sec-head{padding:1rem 1rem .6rem;display:flex;align-items:center;justify-content:space-between;}
+.sec-title{font-size:.95rem;font-weight:800;}
+.chat-contact-list{flex:1;overflow-y:auto;}
+.chat-contact-item{display:flex;align-items:center;gap:.8rem;padding:.9rem 1.1rem;background:#fff;border-bottom:1px solid var(--gray3);cursor:pointer;transition:background .15s;}
+.chat-contact-item:active{background:var(--gray2);}
+.chat-av{width:42px;height:42px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.92rem;flex-shrink:0;position:relative;}
+.chat-av .udot{position:absolute;top:-1px;right:-1px;width:11px;height:11px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+.chat-cinfo{flex:1;min-width:0;}
+.chat-cname{font-weight:700;font-size:.88rem;}
+.chat-cprev{font-size:.74rem;color:var(--gray);margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-wrap{display:flex;flex-direction:column;height:100%;}
+.conv-header{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;background:#fff;border-bottom:1px solid var(--gray3);flex-shrink:0;}
+.conv-back{width:34px;height:34px;border:none;background:var(--gray2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;flex-shrink:0;}
+.conv-av{width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;}
+.conv-name{font-weight:800;font-size:.88rem;}
+.conv-sub{font-size:.72rem;color:var(--gray);}
+.conv-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.6rem;-webkit-overflow-scrolling:touch;}
+.msg-row{display:flex;align-items:flex-end;gap:.4rem;}
+.msg-row.me{flex-direction:row-reverse;}
+.msg-bubble{max-width:72%;padding:.6rem .9rem;border-radius:18px;font-size:.85rem;line-height:1.5;word-break:break-word;}
+.msg-row.them .msg-bubble{background:#fff;color:var(--dark);border-bottom-left-radius:4px;border:1px solid var(--gray3);}
+.msg-row.me .msg-bubble{background:var(--blue);color:#fff;border-bottom-right-radius:4px;}
+.msg-time{font-size:.62rem;color:var(--gray4);}
+.conv-input{display:flex;align-items:flex-end;gap:.6rem;padding:.8rem 1rem;border-top:1px solid var(--gray3);background:#fff;flex-shrink:0;}
+.conv-input textarea{flex:1;padding:.6rem .9rem;border:1.5px solid var(--gray3);border-radius:18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.86rem;outline:none;resize:none;line-height:1.5;max-height:90px;transition:border-color .2s;}
+.conv-input textarea:focus{border-color:var(--blue);}
+.send-btn{width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;border:none;display:flex;align-items:center;justify-content:center;font-size:.95rem;cursor:pointer;flex-shrink:0;}
+.send-btn:active{background:var(--blue2);}
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.5);backdrop-filter:blur(3px);}
+.overlay.on{display:flex;align-items:flex-end;justify-content:center;}
+.sheet{background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:1.2rem 1.3rem 2rem;animation:sheetUp .28s ease;}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:var(--gray3);border-radius:4px;margin:0 auto 1.2rem;}
+.sheet-title{font-size:1rem;font-weight:800;margin-bottom:1.3rem;}
+#scr-land{overflow-y:auto;height:100vh;}
+.land-hero{padding:2rem 1.2rem 1.5rem;background:linear-gradient(160deg,var(--blue3) 0%,#fff 70%);}
+.land-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.land-brand{font-size:1.1rem;font-weight:900;color:var(--blue2);}
+.land-nav-btns{display:flex;gap:.4rem;}
+.nbtn{padding:.42rem .9rem;border-radius:50px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.nbtn.outline{background:#fff;border:2px solid var(--blue);color:var(--blue);}
+.nbtn.solid{background:var(--blue);color:#fff;}
+.hero-tag{display:inline-flex;align-items:center;gap:.3rem;background:rgba(27,79,216,.12);color:var(--blue);font-size:.7rem;font-weight:800;padding:.25rem .8rem;border-radius:50px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;}
+.hero-title{font-size:2.1rem;font-weight:900;line-height:1.1;color:var(--dark);margin-bottom:.8rem;}
+.hero-title .bl{color:var(--blue);}
+.hero-sub{font-size:.88rem;color:var(--gray);line-height:1.7;margin-bottom:1.5rem;}
+.hero-btns{display:flex;flex-direction:column;gap:.7rem;}
+.hbtn{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.8rem;border-radius:var(--r2);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;border:none;transition:all .2s;}
+.hbtn.blue{background:var(--blue);color:#fff;box-shadow:0 4px 16px rgba(27,79,216,.3);}
+.hbtn.white{background:#fff;color:var(--blue);border:2px solid var(--blue);}
+.hbtn.wa{background:#25D366;color:#fff;}
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);background:var(--blue);padding:1.2rem 1rem;}
+.ss-item{text-align:center;color:#fff;}
+.ss-num{font-size:1.5rem;font-weight:900;}
+.ss-label{font-size:.65rem;font-weight:600;opacity:.75;margin-top:.15rem;}
+.how-section{padding:1.5rem 1.2rem;}
+.sec-label{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:.5rem;}
+.sec-big{font-size:1.3rem;font-weight:900;color:var(--dark);margin-bottom:1.2rem;}
+.how-cards{display:flex;flex-direction:column;gap:.8rem;}
+.how-card{background:#fff;border-radius:var(--r);border:1px solid var(--gray3);padding:1rem 1.1rem;display:flex;align-items:flex-start;gap:.9rem;box-shadow:var(--sh);}
+.how-num{width:34px;height:34px;background:var(--blue3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:900;color:var(--blue);flex-shrink:0;}
+.how-card h3{font-size:.88rem;font-weight:800;margin-bottom:.25rem;}
+.how-card p{font-size:.78rem;color:var(--gray);line-height:1.55;}
+.order-section{background:var(--blue2);padding:2rem 1.2rem;}
+.order-section .sec-label{color:rgba(255,255,255,.7);}
+.order-section .sec-big{color:#fff;}
+.ocard{background:rgba(255,255,255,.12);border-radius:var(--r);padding:1.2rem;border:1px solid rgba(255,255,255,.2);}
+.ofg{margin-bottom:.8rem;}
+.ofg label{display:block;font-size:.74rem;font-weight:700;color:rgba(255,255,255,.85);margin-bottom:.3rem;}
+.ofg input,.ofg textarea{width:100%;padding:.68rem .9rem;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.25);border-radius:var(--r2);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.86rem;outline:none;}
+.ofg input::placeholder,.ofg textarea::placeholder{color:rgba(255,255,255,.5);}
+.ofg input:focus,.ofg textarea:focus{border-color:rgba(255,255,255,.6);}
+.ofg textarea{resize:vertical;min-height:70px;}
+land-footer{background:var(--dark);color:rgba(255,255,255,.5);text-align:center;padding:1.5rem;font-size:.76rem;display:block;}
+#scr-auth{background:var(--blue3);justify-content:center;align-items:center;padding:1.5rem;overflow-y:auto;}
+.auth-card{background:#fff;border-radius:24px;padding:2rem 1.5rem;width:100%;box-shadow:var(--sh3);}
+.auth-logo{text-align:center;margin-bottom:1.8rem;}
+.auth-logo .tico{font-size:2.5rem;display:block;margin-bottom:.4rem;}
+.auth-logo h2{font-size:1.2rem;font-weight:900;color:var(--blue2);}
+.auth-logo p{font-size:.78rem;color:var(--gray);margin-top:.2rem;}
+.auth-tabs{display:flex;gap:.3rem;background:var(--gray2);border-radius:50px;padding:.3rem;margin-bottom:1.5rem;}
+.atab{flex:1;padding:.48rem;border-radius:50px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--gray);font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;}
+.atab.on{background:#fff;color:var(--blue);box-shadow:var(--sh);}
+.acard{background:#fff;border-radius:var(--r);border:1px solid var(--gray3);box-shadow:var(--sh);margin:0 1rem 1rem;padding:1rem 1.1rem;}
+.acard-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;}
+.acard-title{font-size:.9rem;font-weight:800;}
+.acard-date{font-size:.7rem;color:var(--gray);}
+.acard-body{font-size:.82rem;color:var(--gray);line-height:1.6;}
+.ocard-item{background:#fff;border-radius:var(--r);border:1px solid var(--gray3);box-shadow:var(--sh);margin:0 1rem 1rem;padding:1rem 1.1rem;}
+.ocard-name{font-weight:800;font-size:.9rem;margin-bottom:.3rem;}
+.ocard-detail{font-size:.78rem;color:var(--gray);margin-bottom:.2rem;display:flex;align-items:center;gap:.3rem;}
+.ocard-actions{display:flex;gap:.6rem;margin-top:.8rem;}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);z-index:999;background:var(--dark);color:#fff;padding:.7rem 1.4rem;border-radius:50px;font-size:.82rem;font-weight:700;box-shadow:var(--sh3);opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.ok{background:var(--green3);}
+#toast.err{background:var(--red);}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 2rem;color:var(--gray);}
+.empty .ei{font-size:2.8rem;margin-bottom:.8rem;}
+.empty p{font-size:.84rem;text-align:center;line-height:1.6;}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:var(--gray);}
+.spinner{width:40px;height:40px;border:4px solid var(--gray3);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:1rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="scr-loading" class="scr on">
+  <div class="loading">
+    <div class="spinner"></div>
+    <p style="font-weight:600;font-size:.9rem">Chargement...</p>
+  </div>
+</div>
+
+<!-- LANDING -->
+<div id="scr-land" class="scr">
+  <div class="land-hero">
+    <div class="land-nav">
+      <div class="land-brand">🐯 Tiger Hood</div>
+      <div class="land-nav-btns">
+        <button class="nbtn outline" onclick="showAuth('login')">Connexion</button>
+        <button class="nbtn solid" onclick="showAuth('register')">S'inscrire</button>
+      </div>
+    </div>
+    <div class="hero-tag">🐯 Tiger Hood Express</div>
+    <h1 class="hero-title">Vos livraisons,<br><span class="bl">sous contrôle</span></h1>
+    <p class="hero-sub">Tiger Hood connecte chefs et livreurs. Assignez, suivez, communiquez et confirmez en temps réel.</p>
+    <div class="hero-btns">
+      <button class="hbtn blue" onclick="scrollOrder()">📦 Commander une livraison</button>
+      <button class="hbtn white" onclick="showAuth('register')">👤 Espace livreur</button>
+      <button class="hbtn wa" onclick="goWA()">💬 Plus d'infos WhatsApp</button>
+    </div>
+  </div>
+  <div class="stats-strip">
+    <div class="ss-item"><div class="ss-num">24/7</div><div class="ss-label">Disponible</div></div>
+    <div class="ss-item"><div class="ss-num">⚡</div><div class="ss-label">Express</div></div>
+    <div class="ss-item"><div class="ss-num">🔒</div><div class="ss-label">Sécurisé</div></div>
+  </div>
+  <div class="how-section">
+    <div class="sec-label">Comment ça marche</div>
+    <div class="sec-big">Simple & rapide</div>
+    <div class="how-cards">
+      <div class="how-card"><div class="how-num">1</div><div><h3>Commandez</h3><p>Remplissez le formulaire avec vos adresses et détails du colis.</p></div></div>
+      <div class="how-card"><div class="how-num">2</div><div><h3>Assignation</h3><p>Le chef reçoit votre demande et assigne un livreur disponible.</p></div></div>
+      <div class="how-card"><div class="how-num">3</div><div><h3>Prise en charge</h3><p>Le livreur accepte la mission et part récupérer votre colis.</p></div></div>
+      <div class="how-card"><div class="how-num">4</div><div><h3>Livré ✅</h3><p>Votre colis est livré et confirmé sur la plateforme.</p></div></div>
+    </div>
+  </div>
+  <div class="order-section" id="order-sec">
+    <div class="sec-label">Besoin d'une livraison ?</div>
+    <div class="sec-big">Passer une commande</div>
+    <div class="ocard">
+      <div class="ofg"><label>Votre nom</label><input id="on" placeholder="Nom complet"></div>
+      <div class="ofg"><label>Téléphone</label><input id="op" placeholder="+226..."></div>
+      <div class="ofg"><label>Adresse de départ</label><input id="of" placeholder="Lieu de collecte"></div>
+      <div class="ofg"><label>Adresse de destination</label><input id="ot" placeholder="Lieu de livraison"></div>
+      <div class="ofg"><label>Description du colis</label><textarea id="od" placeholder="Nature, poids, instructions..."></textarea></div>
+      <button class="hbtn blue" style="width:100%;border-radius:10px;" onclick="submitOrder()">📦 Envoyer ma demande</button>
+    </div>
+  </div>
+  <land-footer>© 2025 <strong style="color:#93C5FD">Tiger Hood Livraison Express</strong></land-footer>
+</div>
+
+<!-- AUTH -->
+<div id="scr-auth" class="scr">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="tico">🐯</span>
+      <h2>Tiger Hood</h2><p>Livraison Express</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="atab on" id="atab-login" onclick="switchAuth('login')">Connexion</button>
+      <button class="atab" id="atab-reg" onclick="switchAuth('register')">S'inscrire</button>
+    </div>
+    <div id="af-login">
+      <div class="err-box" id="lerr"></div>
+      <div class="fg"><label>Téléphone</label><input id="lph" placeholder="+226..."></div>
+      <div class="fg"><label>Mot de passe</label><input type="password" id="lpass" placeholder="••••••"></div>
+      <button class="btn btn-blue btn-full" onclick="doLogin()">Se connecter</button>
+    </div>
+    <div id="af-reg" style="display:none">
+      <div class="err-box" id="rerr"></div>
+      <div class="fg"><label>Nom complet *</label><input id="rname" placeholder="Ex: Mamadou Traoré"></div>
+      <div class="fg"><label>Téléphone *</label><input id="rph" placeholder="+226..." type="tel"></div>
+      <div class="fg"><label>Email *</label><input id="remail" placeholder="exemple@gmail.com" type="email"></div>
+      <div class="fg"><label>Type de véhicule *</label>
+        <select id="rvehicle">
+          <option value="">-- Choisir --</option>
+          <option value="Moto">🏍️ Moto</option>
+          <option value="Vélo">🚲 Vélo</option>
+          <option value="Voiture">🚗 Voiture</option>
+          <option value="Tricycle">🛺 Tricycle</option>
+        </select>
+      </div>
+      <div class="fg"><label>Numéro de plaque *</label><input id="rplate" placeholder="Ex: BF-1234-AB"></div>
+      <div class="fg"><label>Zone de livraison *</label><input id="rzone" placeholder="Ex: Secteur 12, Gounghin..."></div>
+      <div class="fg"><label>Mot de passe *</label><input type="password" id="rpass" placeholder="Minimum 6 caractères"></div>
+      <button class="btn btn-blue btn-full" onclick="doRegister()">Créer mon compte livreur</button>
+    </div>
+    <div style="text-align:center;margin-top:1rem;">
+      <button class="btn btn-ghost" style="font-size:.8rem;" onclick="go('land')">← Retour à l'accueil</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIVREUR -->
+<div id="scr-liv" class="scr">
+  <div class="topbar">
+    <div class="topbar-brand">🐯 Tiger Hood</div>
+    <div class="topbar-right">
+      <div style="font-size:.8rem;font-weight:700;color:var(--gray)" id="liv-name-top">—</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Quitter</button>
+    </div>
+  </div>
+  <div class="scroll" id="liv-content"></div>
+  <nav class="bnav on" id="liv-bnav">
+    <button class="bnav-item on" id="lbn-missions" onclick="livTab('missions',this)"><div class="bi">📦</div><div class="bl">Missions</div></button>
+    <button class="bnav-item" id="lbn-messages" onclick="livTab('messages',this)"><div class="bi">💬</div><div class="bnav-badge" id="liv-msg-badge">0</div><div class="bl">Messages</div></button>
+    <button class="bnav-item" id="lbn-annonces" onclick="livTab('annonces',this)"><div class="bi">📢</div><div class="bl">Annonces</div></button>
+  </nav>
+</div>
+
+<!-- ADMIN -->
+<div id="scr-adm" class="scr">
+  <div class="topbar">
+    <div class="topbar-brand">🐯 Admin</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Quitter</button>
+    </div>
+  </div>
+  <div class="scroll" id="adm-content"></div>
+  <nav class="bnav on" id="adm-bnav">
+    <button class="bnav-item on" id="abn-overview" onclick="admTab('overview',this)"><div class="bi">📊</div><div class="bl">Accueil</div></button>
+    <button class="bnav-item" id="abn-livraisons" onclick="admTab('livraisons',this)"><div class="bi">📦</div><div class="bl">Livraisons</div></button>
+    <button class="bnav-item" id="abn-livreurs" onclick="admTab('livreurs',this)"><div class="bi">👥</div><div class="bl">Livreurs</div></button>
+    <button class="bnav-item" id="abn-commandes" onclick="admTab('commandes',this)"><div class="bi">🛒</div><div class="bl">Commandes</div></button>
+    <button class="bnav-item" id="abn-messages" onclick="admTab('messages',this)"><div class="bi">💬</div><div class="bl">Messages</div></button>
+    <button class="bnav-item" id="abn-annonces" onclick="admTab('annonces',this)"><div class="bi">📢</div><div class="bl">Annonces</div></button>
+  </nav>
+</div>
+
+<!-- CHAT -->
+<div id="scr-chat" class="scr">
+  <div class="conv-wrap" id="conv-wrap"></div>
+</div>
+
+<!-- MODAL LIVRAISON -->
+<div class="overlay" id="m-del">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📦 Nouvelle livraison</div>
+    <div class="fg"><label>Nom du client *</label><input id="dc" placeholder="Ex: Fatou Diallo"></div>
+    <div class="fg"><label>Téléphone client</label><input id="dcp" placeholder="+226..."></div>
+    <div class="fg"><label>Adresse de départ *</label><input id="df" placeholder="Lieu de collecte"></div>
+    <div class="fg"><label>Adresse de destination *</label><input id="dt" placeholder="Lieu de livraison"></div>
+    <div class="fg"><label>Description du colis</label><textarea id="dd" placeholder="Nature, poids..."></textarea></div>
+    <div class="fg"><label>Assigner à un livreur</label>
+      <select id="dsel"><option value="">-- Choisir (optionnel) --</option></select>
+    </div>
+    <div class="fg"><label>Date prévue *</label><input type="date" id="ddate"></div>
+    <button class="btn btn-blue btn-full" onclick="createDelivery()">✓ Créer la livraison</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:.6rem" onclick="closeM('m-del')">Annuler</button>
+  </div>
+</div>
+
+<!-- MODAL ANNONCE -->
+<div class="overlay" id="m-ann">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📢 Nouvelle annonce</div>
+    <div class="fg"><label>Titre</label><input id="ann-t" placeholder="Titre de l'annonce"></div>
+    <div class="fg"><label>Message</label><textarea id="ann-b" placeholder="Contenu de l'annonce..."></textarea></div>
+    <button class="btn btn-blue btn-full" onclick="createAnnonce()">📢 Publier</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:.6rem" onclick="closeM('m-ann')">Annuler</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===================== SUPABASE =====================
+const SUPA_URL = 'https://siagedtmpguczdwtmgqv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpYWdlZHRtcGd1Y3pkd3RtZ3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTg1NjYsImV4cCI6MjA5MzU3NDU2Nn0.TSW7jHCgB3QNGBMj7X3NTv1Eu8TsqSq5aZD95iYUV3E';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let CU = null;
+let activeChat = null;
+let prevScreen = null;
+let msgInterval = null;
+
+// ===================== INIT =====================
+window.addEventListener('load', async () => {
+  await initAdmin();
+  go('land');
+});
+
+async function initAdmin(){
+  const {data} = await sb.from('users').select('id').eq('id','admin').single();
+  if(!data){
+    await sb.from('users').insert({id:'admin',name:'Chef Admin',phone:'admin',pass:'admin123',role:'admin'});
+  }
+}
+
+// ===================== ROUTING =====================
+function go(id){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById('scr-'+id).classList.add('on');
+}
+function goWA(){ window.open('https://wa.me/54922371','_blank'); }
+function scrollOrder(){ document.getElementById('order-sec').scrollIntoView({behavior:'smooth'}); }
+function showAuth(tab){ go('auth'); switchAuth(tab); }
+function switchAuth(tab){
+  document.getElementById('af-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('af-reg').style.display   = tab==='register'?'block':'none';
+  document.getElementById('atab-login').classList.toggle('on', tab==='login');
+  document.getElementById('atab-reg').classList.toggle('on', tab==='register');
+}
+
+// ===================== AUTH =====================
+async function doLogin(){
+  const ph=gv('lph'), pass=gv('lpass');
+  const err=document.getElementById('lerr'); err.style.display='none';
+  toast('Connexion...','');
+  const {data,error} = await sb.from('users').select('*').eq('phone',ph).eq('pass',pass).single();
+  if(error||!data){ err.textContent='Téléphone ou mot de passe incorrect.'; err.style.display='block'; return; }
+  CU=data;
+  if(CU.role==='admin'){ go('adm'); admTab('overview',document.getElementById('abn-overview')); startMsgPoll(); }
+  else { go('liv'); document.getElementById('liv-name-top').textContent=CU.name.split(' ')[0]; livTab('missions',document.getElementById('lbn-missions')); startMsgPoll(); }
+}
+
+async function doRegister(){
+  const name=gv('rname'), ph=gv('rph'), email=gv('remail');
+  const vehicle=gv('rvehicle'), plate=gv('rplate'), zone=gv('rzone'), pass=gv('rpass');
+  const err=document.getElementById('rerr'); err.style.display='none';
+  if(!name||!ph||!email||!vehicle||!plate||!zone||!pass){ err.textContent='Remplissez tous les champs.'; err.style.display='block'; return; }
+  if(pass.length<6){ err.textContent='Mot de passe trop court (6 min).'; err.style.display='block'; return; }
+  toast('Création du compte...','');
+  const {error} = await sb.from('users').insert({
+    id:'u'+Date.now(), name, phone:ph, email, vehicle, plate, zone, pass, role:'livreur'
+  });
+  if(error){ err.textContent='Ce numéro est déjà utilisé.'; err.style.display='block'; return; }
+  toast('Compte créé ! Connectez-vous.','ok');
+  switchAuth('login');
+}
+
+function doLogout(){
+  CU=null; activeChat=null;
+  if(msgInterval) clearInterval(msgInterval);
+  go('land');
+}
+
+// ===================== POLLING MESSAGES =====================
+function startMsgPoll(){
+  if(msgInterval) clearInterval(msgInterval);
+  msgInterval = setInterval(()=>{ updateLivBadge(); }, 5000);
+}
+
+// ===================== LIVREUR =====================
+function livTab(tab, el){
+  document.querySelectorAll('#liv-bnav .bnav-item').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  const c = document.getElementById('liv-content');
+  if(tab==='missions') renderMissions(c);
+  else if(tab==='messages') renderLivMessages(c);
+  else if(tab==='annonces') renderAnnonces(c, false);
+}
+
+async function renderMissions(c){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const {data:my} = await sb.from('deliveries').select('*').eq('livreur_id', CU.id);
+  const list = my||[];
+  let html = `<div class="sec-head"><div class="sec-title">Mes missions 📦</div></div>`;
+  html += `<div class="stat-grid">
+    <div class="scard"><div class="scard-label">Total</div><div class="scard-val">${list.length}</div></div>
+    <div class="scard"><div class="scard-label">À accepter</div><div class="scard-val">${list.filter(d=>!d.accepted&&d.status!=='done').length}</div></div>
+    <div class="scard"><div class="scard-label">En cours</div><div class="scard-val">${list.filter(d=>d.accepted&&d.status!=='done').length}</div></div>
+    <div class="scard"><div class="scard-label">Complétées</div><div class="scard-val">${list.filter(d=>d.status==='done').length}</div></div>
+  </div><div style="height:.8rem"></div>`;
+  if(!list.length){
+    html += `<div class="empty"><div class="ei">📦</div><p>Aucune mission assignée.<br>Le chef vous assignera bientôt.</p></div>`;
+  } else {
+    list.forEach(d=>{
+      let actions='';
+      if(d.status!=='done'&&!d.accepted) actions=`<button class="btn btn-blue btn-sm" onclick="acceptDel('${d.id}')">✓ Accepter</button>`;
+      else if(d.accepted&&d.status!=='done') actions=`<button class="btn btn-green btn-sm" onclick="deliverDone('${d.id}')">✅ Marquer livré</button>`;
+      else actions=`<span class="badge bdone">✅ Complétée</span>`;
+      html+=`<div class="mcard">
+        <div class="mcard-top">
+          <div class="mcard-icon">📦</div>
+          <div class="mcard-info">
+            <div class="mcard-ref">${d.id}</div>
+            <div class="mcard-client">${d.client}</div>
+            <div class="mcard-route">📍 ${d.from_addr} → 🏁 ${d.to_addr}</div>
+            ${d.desc?`<div class="mcard-desc">📝 ${d.desc}</div>`:''}
+            <div class="mcard-desc">📅 ${d.date}</div>
+          </div>
+        </div>
+        <div class="mcard-bot">${actions} ${statusBadge(d.status,d.accepted)}</div>
+      </div>`;
+    });
+  }
+  c.innerHTML=html;
+}
+
+async function acceptDel(id){
+  await sb.from('deliveries').update({accepted:true,status:'progress'}).eq('id',id);
+  renderMissions(document.getElementById('liv-content'));
+  toast('Mission acceptée ! Bonne livraison 🛵','ok');
+}
+
+async function deliverDone(id){
+  await sb.from('deliveries').update({status:'done'}).eq('id',id);
+  renderMissions(document.getElementById('liv-content'));
+  toast('Livraison confirmée ✅','ok');
+}
+
+async function renderLivMessages(c){
+  const {data:msgs} = await sb.from('messages').select('*').or(`from_id.eq.${CU.id},to_id.eq.${CU.id}`).order('time',{ascending:false}).limit(1);
+  const last = msgs&&msgs[0];
+  const {data:unreadData} = await sb.from('messages').select('id').eq('from_id','admin').eq('to_id',CU.id).eq('read',false);
+  const unread = unreadData?.length||0;
+  c.innerHTML=`
+    <div class="sec-head"><div class="sec-title">Messages 💬</div></div>
+    <div class="chat-contact-list">
+      <div class="chat-contact-item" onclick="openChat('admin','livreur')">
+        <div class="chat-av">C${unread>0?'<div class="udot"></div>':''}</div>
+        <div class="chat-cinfo">
+          <div class="chat-cname">Chef Admin</div>
+          <div class="chat-cprev">${last?last.text:'Démarrer la conversation...'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function renderAnnonces(c, isAdmin){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const {data} = await sb.from('annonces').select('*').order('date',{ascending:false});
+  const list = data||[];
+  let html=`<div class="sec-head"><div class="sec-title">Annonces 📢</div>${isAdmin?`<button class="btn btn-blue btn-sm" onclick="openM('m-ann')">+ Nouvelle</button>`:''}</div>`;
+  if(!list.length){
+    html+=`<div class="empty"><div class="ei">📢</div><p>Aucune annonce publiée.</p></div>`;
+  } else {
+    list.forEach(a=>{
+      html+=`<div class="acard">
+        <div class="acard-head">
+          <div class="acard-title">📢 ${a.title}</div>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <div class="acard-date">${a.date}</div>
+            ${isAdmin?`<button class="btn btn-red btn-sm" onclick="delAnnonce('${a.id}')">✕</button>`:''}
+          </div>
+        </div>
+        <div class="acard-body">${a.body}</div>
+      </div>`;
+    });
+  }
+  c.innerHTML=html;
+}
+
+async function updateLivBadge(){
+  if(!CU||CU.role!=='livreur') return;
+  const {data} = await sb.from('messages').select('id').eq('from_id','admin').eq('to_id',CU.id).eq('read',false);
+  const n = data?.length||0;
+  const badge=document.getElementById('liv-msg-badge');
+  if(badge){ badge.textContent=n; badge.classList.toggle('on',n>0); }
+}
+
+// ===================== ADMIN =====================
+function admTab(tab, el){
+  document.querySelectorAll('#adm-bnav .bnav-item').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  const c=document.getElementById('adm-content');
+  if(tab==='overview') renderAdmOverview(c);
+  else if(tab==='livraisons') renderAdmLivraisons(c);
+  else if(tab==='livreurs') renderAdmLivreurs(c);
+  else if(tab==='commandes') renderAdmCommandes(c);
+  else if(tab==='messages') renderAdmMessages(c);
+  else if(tab==='annonces') renderAnnonces(c,true);
+}
+
+async function renderAdmOverview(c){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const [{data:dels},{data:livs},{data:ords}] = await Promise.all([
+    sb.from('deliveries').select('*'),
+    sb.from('users').select('*').eq('role','livreur'),
+    sb.from('orders').select('*')
+  ]);
+  const d=dels||[], l=livs||[], o=ords||[];
+  c.innerHTML=`
+    <div class="sec-head"><div class="sec-title">Vue générale 📊</div></div>
+    <div class="stat-grid">
+      <div class="scard"><div class="scard-label">Livraisons</div><div class="scard-val">${d.length}</div></div>
+      <div class="scard"><div class="scard-label">Complétées</div><div class="scard-val">${d.filter(x=>x.status==='done').length}</div></div>
+      <div class="scard"><div class="scard-label">En cours</div><div class="scard-val">${d.filter(x=>x.status==='progress').length}</div></div>
+      <div class="scard"><div class="scard-label">Livreurs</div><div class="scard-val">${l.length}</div></div>
+      <div class="scard"><div class="scard-label">Commandes</div><div class="scard-val">${o.length}</div></div>
+      <div class="scard"><div class="scard-label">En attente</div><div class="scard-val">${d.filter(x=>x.status==='pending').length}</div></div>
+    </div>
+    <div style="height:.8rem"></div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Dernières livraisons</div></div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Réf.</th><th>Client</th><th>Livreur</th><th>Statut</th></tr></thead>
+        <tbody>${d.slice(-5).reverse().map(x=>{
+          const liv=l.find(u=>u.id===x.livreur_id);
+          return `<tr><td><span class="badge bblue">${x.id}</span></td><td style="font-size:.82rem">${x.client}</td><td style="font-size:.8rem">${liv?liv.name:'<em style="color:var(--gray)">Non assigné</em>'}</td><td>${statusBadge(x.status,x.accepted)}</td></tr>`;
+        }).join('')||'<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--gray)">Aucune livraison</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+}
+
+async function renderAdmLivraisons(c){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const [{data:dels},{data:livs}] = await Promise.all([
+    sb.from('deliveries').select('*').order('date',{ascending:false}),
+    sb.from('users').select('*').eq('role','livreur')
+  ]);
+  const d=dels||[], l=livs||[];
+  fillDeliverySelect(l);
+  let html=`<div class="sec-head"><div class="sec-title">Livraisons 📦</div><button class="btn btn-blue btn-sm" onclick="openM('m-del')">+ Nouvelle</button></div>`;
+  if(!d.length){
+    html+=`<div class="empty"><div class="ei">📦</div><p>Aucune livraison.<br>Appuyez sur "+ Nouvelle".</p></div>`;
+  } else {
+    d.forEach(x=>{
+      const liv=l.find(u=>u.id===x.livreur_id);
+      html+=`<div class="mcard">
+        <div class="mcard-top">
+          <div class="mcard-icon">📦</div>
+          <div class="mcard-info">
+            <div class="mcard-ref">${x.id} &nbsp; ${statusBadge(x.status,x.accepted)}</div>
+            <div class="mcard-client">${x.client}</div>
+            <div class="mcard-route">📍 ${x.from_addr} → 🏁 ${x.to_addr}</div>
+            ${x.desc?`<div class="mcard-desc">📝 ${x.desc}</div>`:''}
+            <div class="mcard-desc">📅 ${x.date} &nbsp;|&nbsp; 🛵 ${liv?liv.name:'Non assigné'}</div>
+          </div>
+        </div>
+        <div class="mcard-bot">
+          <button class="btn btn-ghost btn-sm" onclick="cycleStatus('${x.id}','${x.status}',${x.accepted})">⟳ Statut</button>
+          <button class="btn btn-red btn-sm" onclick="delDelivery('${x.id}')">✕</button>
+          ${liv?`<button class="btn btn-blue btn-sm" onclick="openChatAdm('${liv.id}')">💬</button>`:''}
+        </div>
+      </div>`;
+    });
+  }
+  c.innerHTML=html;
+}
+
+async function renderAdmLivreurs(c){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const {data:livs} = await sb.from('users').select('*').eq('role','livreur');
+  const {data:dels} = await sb.from('deliveries').select('*');
+  const l=livs||[], d=dels||[];
+  let html=`<div class="sec-head"><div class="sec-title">Livreurs 👥 (${l.length})</div></div>`;
+  if(!l.length){
+    html+=`<div class="empty"><div class="ei">👥</div><p>Aucun livreur inscrit.</p></div>`;
+  } else {
+    l.forEach(x=>{
+      const asgn=d.filter(dd=>dd.livreur_id===x.id).length;
+      const done=d.filter(dd=>dd.livreur_id===x.id&&dd.status==='done').length;
+      html+=`<div class="mcard">
+        <div class="mcard-top">
+          <div class="mcard-icon" style="background:var(--blue);color:#fff;font-weight:900;font-size:1.2rem">${x.name[0]}</div>
+          <div class="mcard-info">
+            <div class="mcard-client">${x.name}</div>
+            <div class="mcard-desc">📞 ${x.phone}</div>
+            <div class="mcard-desc">📧 ${x.email||'—'}</div>
+            <div class="mcard-desc">🚗 ${x.vehicle||'—'} &nbsp;|&nbsp; 🪪 ${x.plate||'—'}</div>
+            <div class="mcard-desc">📍 Zone : ${x.zone||'—'}</div>
+            <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+              <span class="badge bblue">📦 ${asgn} assignées</span>
+              <span class="badge bdone">✅ ${done} complétées</span>
+            </div>
+          </div>
+        </div>
+        <div class="mcard-bot">
+          <button class="btn btn-blue btn-sm" onclick="openChatAdm('${x.id}')">💬 Message</button>
+        </div>
+      </div>`;
+    });
+  }
+  c.innerHTML=html;
+}
+
+async function renderAdmCommandes(c){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const {data} = await sb.from('orders').select('*').order('date',{ascending:false});
+  const list=data||[];
+  let html=`<div class="sec-head"><div class="sec-title">Commandes clients 🛒</div></div>`;
+  if(!list.length){
+    html+=`<div class="empty"><div class="ei">🛒</div><p>Aucune commande reçue.</p></div>`;
+  } else {
+    list.forEach(o=>{
+      html+=`<div class="ocard-item">
+        <div class="ocard-name">${o.name}</div>
+        <div class="ocard-detail">📞 ${o.phone}</div>
+        <div class="ocard-detail">📍 ${o.from_addr} → 🏁 ${o.to_addr}</div>
+        ${o.desc?`<div class="ocard-detail">📝 ${o.desc}</div>`:''}
+        <div class="ocard-actions">
+          <button class="btn btn-blue btn-sm" onclick="convertOrder('${o.id}','${o.name}','${o.phone}','${o.from_addr}','${o.to_addr}','${o.desc||''}')">➕ Créer livraison</button>
+          <button class="btn btn-red btn-sm" onclick="delOrder('${o.id}')">✕</button>
+        </div>
+      </div>`;
+    });
+  }
+  c.innerHTML=html;
+}
+
+async function renderAdmMessages(c){
+  c.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
+  const {data:livs} = await sb.from('users').select('*').eq('role','livreur');
+  const list=livs||[];
+  let html=`<div class="sec-head"><div class="sec-title">Messagerie 💬</div></div>`;
+  if(!list.length){
+    html+=`<div class="empty"><div class="ei">👥</div><p>Aucun livreur inscrit.</p></div>`;
+  } else {
+    html+=`<div style="background:#fff;border-top:1px solid var(--gray3);">`;
+    for(const l of list){
+      const {data:msgs} = await sb.from('messages').select('*').or(`and(from_id.eq.admin,to_id.eq.${l.id}),and(from_id.eq.${l.id},to_id.eq.admin)`).order('time',{ascending:false}).limit(1);
+      const {data:unreadData} = await sb.from('messages').select('id').eq('from_id',l.id).eq('to_id','admin').eq('read',false);
+      const last=msgs&&msgs[0];
+      const unread=unreadData?.length||0;
+      html+=`<div class="chat-contact-item" onclick="openChatAdm('${l.id}')">
+        <div class="chat-av">${l.name[0]}${unread>0?'<div class="udot"></div>':''}</div>
+        <div class="chat-cinfo">
+          <div class="chat-cname">${l.name} <span style="font-size:.7rem;color:var(--gray)">${l.phone}</span></div>
+          <div class="chat-cprev">${last?last.text:'Démarrer la conversation...'}</div>
+        </div>
+        ${unread>0?`<span class="badge bred">${unread}</span>`:''}
+      </div>`;
+    }
+    html+=`</div>`;
+  }
+  c.innerHTML=html;
+}
+
+// ===================== CHAT =====================
+async function openChat(contactId, mode){
+  prevScreen = mode==='livreur' ? 'liv' : 'adm';
+  activeChat = contactId;
+  const selfId = mode==='livreur' ? CU.id : 'admin';
+
+  const {data:contactData} = await sb.from('users').select('*').eq('id',contactId).single();
+  const contact = contactData || {name:'Chef Admin', role:'admin', phone:''};
+
+  await sb.from('messages').update({read:true}).eq('from_id',contactId).eq('to_id',selfId);
+
+  const {data:msgs} = await sb.from('messages')
+    .select('*')
+    .or(`and(from_id.eq.${selfId},to_id.eq.${contactId}),and(from_id.eq.${contactId},to_id.eq.${selfId})`)
+    .order('time',{ascending:true});
+
+  const list=msgs||[];
+  const msgsHtml = list.length
+    ? list.map(m=>{
+        const isSelf=m.from_id===selfId;
+        const time=new Date(m.time).toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="msg-row ${isSelf?'me':'them'}">
+          <div class="msg-bubble">${m.text.replace(/\n/g,'<br>')}</div>
+          <div class="msg-time">${time}</div>
+        </div>`;
+      }).join('')
+    : `<div style="text-align:center;color:var(--gray);padding:3rem 1rem;font-size:.84rem">Démarrez la conversation 💬</div>`;
+
+  const roleLabel = contact.role==='admin' ? 'Chef de livraison' : `Livreur · ${contact.phone}`;
+
+  document.getElementById('conv-wrap').innerHTML=`
+    <div class="conv-header">
+      <button class="conv-back" onclick="backFromChat('${mode}')">←</button>
+      <div class="conv-av">${contact.name[0]}</div>
+      <div>
+        <div class="conv-name">${contact.name}</div>
+        <div class="conv-sub">${roleLabel}</div>
+      </div>
+    </div>
+    <div class="conv-msgs" id="conv-msgs">${msgsHtml}</div>
+    <div class="conv-input">
+      <textarea id="cinput" placeholder="Écrire un message..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg('${mode}','${contactId}');}"></textarea>
+      <button class="send-btn" onclick="sendMsg('${mode}','${contactId}')">➤</button>
+    </div>`;
+
+  go('chat');
+  setTimeout(()=>{ const m=document.getElementById('conv-msgs'); if(m) m.scrollTop=m.scrollHeight; },80);
+}
+
+function openChatAdm(id){ openChat(id,'admin'); }
+
+function backFromChat(mode){
+  go(prevScreen||'adm');
+  if(mode==='livreur'){ livTab('messages',document.getElementById('lbn-messages')); updateLivBadge(); }
+  else { admTab('messages',document.getElementById('abn-messages')); }
+}
+
+async function sendMsg(mode, toId){
+  const input=document.getElementById('cinput');
+  if(!input) return;
+  const text=input.value.trim();
+  if(!text) return;
+  const from=mode==='admin'?'admin':CU.id;
+  const to=mode==='admin'?toId:'admin';
+  await sb.from('messages').insert({id:'m'+Date.now(), from_id:from, to_id:to, text, time:Date.now(), read:false});
+  input.value='';
+  openChat(toId, mode);
+}
+
+// ===================== CRUD =====================
+function fillDeliverySelect(livs){
+  setTimeout(()=>{
+    const sel=document.getElementById('dsel');
+    if(!sel) return;
+    const list=livs||[];
+    sel.innerHTML='<option value="">-- Choisir (optionnel) --</option>'+list.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+    const dd=document.getElementById('ddate');
+    if(dd&&!dd.value) dd.value=new Date().toISOString().split('T')[0];
+  },60);
+}
+
+async function createDelivery(){
+  const client=gv('dc'), phone=gv('dcp'), from_addr=gv('df'), to_addr=gv('dt'), desc=gv('dd');
+  const livreur_id=document.getElementById('dsel')?.value||'';
+  const date=gv('ddate');
+  if(!client||!from_addr||!to_addr||!date){ toast('Remplissez les champs obligatoires.','err'); return; }
+  await sb.from('deliveries').insert({
+    id:'D'+String(Date.now()).slice(-5), client, phone, from_addr, to_addr, desc,
+    livreur_id, date, status: livreur_id?'progress':'pending', accepted:false
+  });
+  closeM('m-del'); toast('Livraison créée !','ok');
+  ['dc','dcp','df','dt','dd'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  if(document.getElementById('dsel')) document.getElementById('dsel').value='';
+  renderAdmLivraisons(document.getElementById('adm-content'));
+}
+
+async function createAnnonce(){
+  const title=gv('ann-t'), body=gv('ann-b');
+  if(!title||!body){ toast('Remplissez tous les champs.','err'); return; }
+  await sb.from('annonces').insert({id:'A'+Date.now(), title, body, date:new Date().toISOString().split('T')[0]});
+  closeM('m-ann'); toast('Annonce publiée !','ok');
+  document.getElementById('ann-t').value='';
+  document.getElementById('ann-b').value='';
+  renderAnnonces(document.getElementById('adm-content'),true);
+}
+
+async function cycleStatus(id, status, accepted){
+  const c={pending:'progress',progress:'done',done:'pending'};
+  const newStatus=c[status];
+  const newAccepted = newStatus==='progress'?true : newStatus==='pending'?false:accepted;
+  await sb.from('deliveries').update({status:newStatus, accepted:newAccepted}).eq('id',id);
+  renderAdmLivraisons(document.getElementById('adm-content'));
+}
+
+async function delDelivery(id){
+  if(!confirm('Supprimer cette livraison ?')) return;
+  await sb.from('deliveries').delete().eq('id',id);
+  renderAdmLivraisons(document.getElementById('adm-content'));
+  toast('Supprimé.');
+}
+
+async function delAnnonce(id){
+  await sb.from('annonces').delete().eq('id',id);
+  renderAnnonces(document.getElementById('adm-content'),true);
+  toast('Annonce supprimée.');
+}
+
+async function delOrder(id){
+  await sb.from('orders').delete().eq('id',id);
+  renderAdmCommandes(document.getElementById('adm-content'));
+  toast('Commande retirée.');
+}
+
+function convertOrder(id, name, phone, from_addr, to_addr, desc){
+  openM('m-del');
+  setTimeout(()=>{
+    sv('dc',name); sv('dcp',phone); sv('df',from_addr); sv('dt',to_addr); sv('dd',desc);
+    delOrder(id);
+  },80);
+  toast('Données pré-remplies. Assignez un livreur.','ok');
+}
+
+async function submitOrder(){
+  const name=gv('on'), phone=gv('op'), from_addr=gv('of'), to_addr=gv('ot'), desc=gv('od');
+  if(!name||!phone||!from_addr||!to_addr){ toast('Remplissez les champs obligatoires.','err'); return; }
+  await sb.from('orders').insert({id:'O'+Date.now(), name, phone, from_addr, to_addr, desc, date:new Date().toISOString().split('T')[0]});
+  ['on','op','of','ot','od'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  toast('Demande envoyée ! Nous vous contactons bientôt 🚀','ok');
+}
+
+// ===================== HELPERS =====================
+function statusBadge(status, accepted){
+  if(status==='done') return '<span class="badge bdone">🟢 Livré</span>';
+  if(status==='progress'&&accepted) return '<span class="badge bprog">🔵 En cours</span>';
+  if(status==='progress'&&!accepted) return '<span class="badge bwait">🟡 À accepter</span>';
+  return '<span class="badge bwait">🟡 En attente</span>';
+}
+function gv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+function sv(id,v){ const e=document.getElementById(id); if(e) e.value=v; }
+function openM(id){ document.getElementById(id).classList.add('on'); }
+function closeM(id){ document.getElementById(id).classList.remove('on'); }
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('on'); }));
+let toastT;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='on'+(type?' '+type:'');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.className='',3500);
+}
+</script>
+</body>
+</html>
