@@ -404,12 +404,16 @@ function switchAuth(tab){
 async function doLogin(){
   const ph=gv('lph'), pass=gv('lpass');
   const err=document.getElementById('lerr'); err.style.display='none';
-  toast('Connexion...','');
-  const {data,error} = await sb.from('users').select('*').eq('phone',ph).eq('pass',pass).single();
-  if(error||!data){ err.textContent='Téléphone ou mot de passe incorrect.'; err.style.display='block'; return; }
-  CU=data;
-  if(CU.role==='admin'){ go('adm'); admTab('overview',document.getElementById('abn-overview')); startMsgPoll(); }
-  else { go('liv'); document.getElementById('liv-name-top').textContent=CU.name.split(' ')[0]; livTab('missions',document.getElementById('lbn-missions')); startMsgPoll(); }
+  if(!ph||!pass){ err.textContent='Remplissez tous les champs.'; err.style.display='block'; return; }
+  toast('Connexion en cours...','');
+  try {
+    const {data,error} = await sb.from('users').select('*').eq('phone',ph).eq('pass',pass);
+    if(error){ console.error(error); err.textContent='Erreur réseau. Réessayez.'; err.style.display='block'; return; }
+    if(!data||data.length===0){ err.textContent='Téléphone ou mot de passe incorrect.'; err.style.display='block'; return; }
+    CU=data[0];
+    if(CU.role==='admin'){ go('adm'); admTab('overview',document.getElementById('abn-overview')); startMsgPoll(); }
+    else { go('liv'); document.getElementById('liv-name-top').textContent=CU.name.split(' ')[0]; livTab('missions',document.getElementById('lbn-missions')); startMsgPoll(); }
+  } catch(e){ err.textContent='Erreur de connexion. Vérifiez votre internet.'; err.style.display='block'; }
 }
 
 async function doRegister(){
