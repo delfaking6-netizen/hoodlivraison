@@ -479,7 +479,7 @@ async function renderMissions(c){
             <div class="mcard-ref">${d.id}</div>
             <div class="mcard-client">${d.client}</div>
             <div class="mcard-route">📍 ${d.from_addr} → 🏁 ${d.to_addr}</div>
-            ${d.desc?`<div class="mcard-desc">📝 ${d.desc}</div>`:''}
+            ${d.description?`<div class="mcard-desc">📝 ${d.description}</div>`:''}
             <div class="mcard-desc">📅 ${d.date}</div>
           </div>
         </div>
@@ -617,7 +617,7 @@ async function renderAdmLivraisons(c){
             <div class="mcard-ref">${x.id} &nbsp; ${statusBadge(x.status,x.accepted)}</div>
             <div class="mcard-client">${x.client}</div>
             <div class="mcard-route">📍 ${x.from_addr} → 🏁 ${x.to_addr}</div>
-            ${x.desc?`<div class="mcard-desc">📝 ${x.desc}</div>`:''}
+            ${x.description?`<div class="mcard-desc">📝 ${x.description}</div>`:''}
             <div class="mcard-desc">📅 ${x.date} &nbsp;|&nbsp; 🛵 ${liv?liv.name:'Non assigné'}</div>
           </div>
         </div>
@@ -681,9 +681,9 @@ async function renderAdmCommandes(c){
         <div class="ocard-name">${o.name}</div>
         <div class="ocard-detail">📞 ${o.phone}</div>
         <div class="ocard-detail">📍 ${o.from_addr} → 🏁 ${o.to_addr}</div>
-        ${o.desc?`<div class="ocard-detail">📝 ${o.desc}</div>`:''}
+        ${o.description?`<div class="ocard-detail">📝 ${o.description}</div>`:''}
         <div class="ocard-actions">
-          <button class="btn btn-blue btn-sm" onclick="convertOrder('${o.id}','${o.name}','${o.phone}','${o.from_addr}','${o.to_addr}','${o.desc||''}')">➕ Créer livraison</button>
+          <button class="btn btn-blue btn-sm" onclick="convertOrder('${o.id}','${o.name}','${o.phone}','${o.from_addr}','${o.to_addr}','${o.description||''}')">➕ Créer livraison</button>
           <button class="btn btn-red btn-sm" onclick="delOrder('${o.id}')">✕</button>
         </div>
       </div>`;
@@ -803,12 +803,12 @@ function fillDeliverySelect(livs){
 }
 
 async function createDelivery(){
-  const client=gv('dc'), phone=gv('dcp'), from_addr=gv('df'), to_addr=gv('dt'), desc=gv('dd');
+  const client=gv('dc'), phone=gv('dcp'), from_addr=gv('df'), to_addr=gv('dt'), description=gv('dd');
   const livreur_id=document.getElementById('dsel')?.value||'';
   const date=gv('ddate');
   if(!client||!from_addr||!to_addr||!date){ toast('Remplissez les champs obligatoires.','err'); return; }
   await sb.from('deliveries').insert({
-    id:'D'+String(Date.now()).slice(-5), client, phone, from_addr, to_addr, desc,
+    id:'D'+String(Date.now()).slice(-5), client, phone, from_addr, to_addr, description,
     livreur_id, date, status: livreur_id?'progress':'pending', accepted:false
   });
   closeM('m-del'); toast('Livraison créée !','ok');
@@ -864,9 +864,9 @@ function convertOrder(id, name, phone, from_addr, to_addr, desc){
 }
 
 async function submitOrder(){
-  const name=gv('on'), phone=gv('op'), from_addr=gv('of'), to_addr=gv('ot'), desc=gv('od');
+  const name=gv('on'), phone=gv('op'), from_addr=gv('of'), to_addr=gv('ot'), description=gv('od');
   if(!name||!phone||!from_addr||!to_addr){ toast('Remplissez les champs obligatoires.','err'); return; }
-  await sb.from('orders').insert({id:'O'+Date.now(), name, phone, from_addr, to_addr, desc, date:new Date().toISOString().split('T')[0]});
+  await sb.from('orders').insert({id:'O'+Date.now(), name, phone, from_addr, to_addr, description, date:new Date().toISOString().split('T')[0]});
   ['on','op','of','ot','od'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   toast('Demande envoyée ! Nous vous contactons bientôt 🚀','ok');
 }
